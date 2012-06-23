@@ -48,10 +48,10 @@ stop() ->
     gen_server:call(?MODULE, stop).
 
 join(Room) ->
-    gen_server:call(?MODULE, {join, Room}).
+    gen_server:cast(?MODULE, {join, Room}).
 
 rooms() ->
-    gen_server:call(?MODULE, listrooms).
+    gen_server:cast(?MODULE, listrooms).
 
 %% ------------------------------------------------------------------
 %% gen_server Function Definitions
@@ -70,21 +70,6 @@ handle_call(stop, _From, State) ->
     exmpp_component:stop(State#state.session),
     {stop, normal, ok, State};
 
-handle_call(listrooms, _From, State) ->
-    [io:format("Room: ~s~n", [Room]) || Room <- State#state.rooms, Room /= []],
-    {reply, ok, State};
-
-handle_call({join, Room}, _From, State) ->
-    spawn_link(fun() ->
-        exmpp_session:send_packet(State#state.session,
-            exmpp_stanza:set_recipient(exmpp_presence:available(), Room ++ "/erlbot")
-        )
-    end),
-    io:format("Joined to ~s~n", [Room]),
-    {reply, ok, State#state{session = State#state.session,
-                            rooms = [State#state.rooms, Room],
-                            name = "erlbot:"}};
-
 handle_call(_Request, _From, State) ->
     {noreply, ok, State}.
 
@@ -94,6 +79,18 @@ handle_info(#received_packet{} = Packet, State) ->
 
 handle_info(_Info, State) ->
     {noreply, State}.
+
+handle_cast(listrooms, State) ->
+    [io:format("Room: ~s~n", [Room]) || Room <- State#state.rooms, Room /= []],
+    {noreply, State};
+
+handle_cast({join, Room}, State) ->
+    exmpp_session:send_packet(State#state.session,
+        exmpp_stanza:set_recipient(exmpp_presence:available(), Room ++ "/erlbot")
+    ),
+    io:format("Joined to ~s~n", [Room]),
+    {noreply, State#state{rooms = [State#state.rooms, Room],
+                          name = "erlbot:"}};
 
 handle_cast(_Msg, State) ->
     {noreply, State}.

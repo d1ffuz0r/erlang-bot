@@ -24,5 +24,4 @@ start_link() ->
 %% ===================================================================
 
 init([]) ->
-    {ok, { {one_for_one, 5, 10}, [{bot1, {bot_wrk, start_link, []}, permanent, 10000, worker, [bot_wrk]}]} }.
-
+    {ok, {{one_for_one, 5, 10}, [?CHILD(bot_wrk, worker)]}}.
