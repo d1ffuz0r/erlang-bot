@@ -1,18 +1,25 @@
 -module(bot_wrk).
 -behaviour(gen_server).
--define(SERVER, ?MODULE).
 
+%% ------------------------------------------------------------------
 %% Settings
-
+%% ------------------------------------------------------------------
+-define(SERVER, ?MODULE).
 -define(USERNAME, "username").
 -define(JSERVER, "jabber.ru").
 -define(PASSWORD, "password").
+
+%% ------------------------------------------------------------------
+%% Includes
+%% ------------------------------------------------------------------
 
 -include_lib("exmpp/include/exmpp_client.hrl").
 -include_lib("exmpp/include/exmpp_xml.hrl").
 -include_lib("exmpp/include/exmpp_nss.hrl").
 
+%% ------------------------------------------------------------------
 %% Records
+%% ------------------------------------------------------------------
 
 -record(state, {session, name, rooms=[]}).
 
@@ -35,6 +42,15 @@
 
 start_link() ->
     gen_server:start_link({local, ?SERVER}, ?MODULE, [], []).
+
+stop() ->
+    gen_server:call(?MODULE, stop).
+
+join(Room) ->
+    gen_server:call(?MODULE, {join, Room}).
+
+rooms() ->
+    gen_server:call(?MODULE, listrooms).
 
 %% ------------------------------------------------------------------
 %% gen_server Function Definitions
@@ -90,6 +106,7 @@ code_change(_OldVsn, State, _Extra) ->
 %% ------------------------------------------------------------------
 %% Internal Function Definitions
 %% ------------------------------------------------------------------
+
 process_message("ping" = Message, To, State) ->
     io:format("You receiveds: ~s: ~s~n",[To, Message]),
     case string:tokens(To, "/") of
@@ -113,12 +130,3 @@ process_received_packet(#state{name=Name} = State, #received_packet{packet_type=
 
 process_received_packet(_State, _Packet) ->
     ok.
-
-stop() ->
-    gen_server:call(?MODULE, stop).
-
-join(Room) ->
-    gen_server:call(?MODULE, {join, Room}).
-
-rooms() ->
-    gen_server:call(?MODULE, listrooms).
