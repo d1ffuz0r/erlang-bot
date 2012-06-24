@@ -108,12 +108,12 @@ code_change(_OldVsn, State, _Extra) ->
 process_message("ping" = Message, To, State) ->
     io:format("You receiveds: ~s: ~s~n",[To, Message]),
     case string:tokens(To, "/") of
-	[Conf, Nick] ->
-	    exmpp_session:send_packet(State#state.session,
-		exmpp_stanza:set_recipient(exmpp_message:groupchat(
-		    erlang:list_to_binary(Nick ++ ": pong")),Conf));
-	_ ->
-	    ok
+        [Conf, Nick] ->
+            exmpp_session:send_packet(State#state.session,
+            exmpp_stanza:set_recipient(exmpp_message:groupchat(
+                erlang:list_to_binary(Nick ++ ": pong")),Conf));
+        _ ->
+            ok
     end;
 process_message(_Message, _To, _State) ->
     ok.
@@ -122,8 +122,8 @@ process_received_packet(#state{name=Name} = State, #received_packet{packet_type=
     From = exmpp_stanza:get_sender(Packet),
     Message = exmpp_xml:get_cdata_as_list(exmpp_xml:get_element(Packet, 'body')),
     case string:tokens(Message, " ") of
-	[Name, Msg] -> process_message(Msg, erlang:binary_to_list(From), State);
-        _ ->           io:format("~s: ~s~n", [From, Message])
+        [Name, Msg] -> process_message(Msg, erlang:binary_to_list(From), State);
+        _           -> io:format("~s: ~s~n", [From, Message])
     end;
 
 process_received_packet(_State, _Packet) ->
