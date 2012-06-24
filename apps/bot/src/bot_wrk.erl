@@ -106,7 +106,7 @@ code_change(_OldVsn, State, _Extra) ->
 %% ------------------------------------------------------------------
 
 process_message("ping" = Message, To, State) ->
-    io:format("You receiveds: ~s: ~s~n",[To, Message]),
+    io:format("You received: ~ts: ~ts~n", [To, Message]),
     case string:tokens(To, "/") of
         [Conf, Nick] ->
             exmpp_session:send_packet(State#state.session,
@@ -115,6 +115,7 @@ process_message("ping" = Message, To, State) ->
         _ ->
             ok
     end;
+
 process_message(_Message, _To, _State) ->
     ok.
 
@@ -123,7 +124,7 @@ process_received_packet(#state{name=Name} = State, #received_packet{packet_type=
     Message = exmpp_xml:get_cdata_as_list(exmpp_xml:get_element(Packet, 'body')),
     case string:tokens(Message, " ") of
         [Name, Msg] -> process_message(Msg, erlang:binary_to_list(From), State);
-        _           -> io:format("~s: ~s~n", [From, Message])
+        _           -> io:format("~ts: ~ts~n", [From, list_to_bitstring(Message)])
     end;
 
 process_received_packet(_State, _Packet) ->
